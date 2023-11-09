@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from functools import partial
+import json
 import logging
+from pathlib import Path
 from typing import Literal
 
 import openai
@@ -113,6 +115,22 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+# Load intent schema from JSON file
+current_dir = Path(__file__).parent
+json_path = (
+    current_dir / "function_schema.json"
+)  # Construct the full path to the JSON file
+
+
+def load_intent_schema():
+    """Load the function schema from the JSON file for the agent to use to create intents."""
+    with open(json_path) as file:
+        return json.load(file)
+
+
+function = load_intent_schema()
+
+
 class OpenAIAgent(conversation.AbstractConversationAgent):
     """OpenAI conversation agent."""
 
@@ -169,6 +187,8 @@ class OpenAIAgent(conversation.AbstractConversationAgent):
                 top_p=top_p,
                 temperature=temperature,
                 user=conversation_id,
+                functions=[function],
+                function_call="auto",
             )
         except error.OpenAIError as err:
             intent_response = intent.IntentResponse(language=user_input.language)
@@ -181,12 +201,55 @@ class OpenAIAgent(conversation.AbstractConversationAgent):
             )
 
         _LOGGER.debug("Response %s", result)
+
         response = result["choices"][0]["message"]
         messages.append(response)
         self.history[conversation_id] = messages
 
+        if "function_call" in response and response["function_call"] is not None:
+            try:
+                arguments = json.loads(response["function_call"]["arguments"])
+                _LOGGER.debug("Function call arguments parsed: %s", arguments)
+
+                intent_type = arguments["intentType"]
+                slots = {
+                    key: {"value": value} for key, value in arguments["slots"].items()
+                }
+                _LOGGER.debug("Handling intent '%s' with slots: %s", intent_type, slots)
+
+                # Handle the intent and ignore the specific response
+                intent_response = await intent.async_handle(
+                    self.hass, "OpenAI Dev", intent_type, slots
+                )
+                _LOGGER.debug(
+                    "Intent handled successfully with response: %s",
+                    vars(intent_response),
+                )
+
+                # Provide a standard success message
+                confirmation = f"The {intent_type} action has been completed."
+
+            except Exception as e:
+                _LOGGER.error("Error handling function call: %s", e)
+                # Provide a standard error message
+                confirmation = "I encountered an error while processing your request."
+
+            # Append the confirmation message to the history
+            messages.append({"role": "system", "content": confirmation})
+            self.history[conversation_id] = messages
+
+        else:
+            # Normal non smart-home related response with no function call
+            confirmation = response.get("content", "")
+            _LOGGER.debug("Non smart-home related response: %s", confirmation)
+
+        # Set the speech in the intent response based on the processed confirmation
         intent_response = intent.IntentResponse(language=user_input.language)
-        intent_response.async_set_speech(response["content"])
+        intent_response.async_set_speech(confirmation)
+
+        # Log the final confirmation message
+        _LOGGER.debug("Final confirmation message: %s", confirmation)
+
         return conversation.ConversationResult(
             response=intent_response, conversation_id=conversation_id
         )

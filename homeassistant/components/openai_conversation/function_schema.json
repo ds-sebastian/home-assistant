@@ -1,0 +1,127 @@
+{
+    "description": "Translate natural language to a Home Assistant intent",
+    "name": "generate_smart_home_intent",
+    "parameters": {
+        "properties": {
+            "intentType": {
+                "description": "Type of intent to generate based on user request.",
+                "enum": [
+                    "HassTurnOn",
+                    "HassTurnOff",
+                    "HassGetState",
+                    "HassLightSet",
+                    "HassShoppingListAddItem"
+                ],
+                "type": "string"
+            },
+            "slots": {
+                "description": "Slots for the intent. Required",
+                "properties": {
+                    "area": {
+                        "description": "Name of an area.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "brightness": {
+                        "description": "Brightness percentage from 0 to 100.",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "description": "Name of color.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "device_class": {
+                        "description": "Device class of devices/entities in an area.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "domain": {
+                        "description": "Domain of devices/entities in an area.",
+                        "enum": [
+                            "person",
+                            "binary_sensor",
+                            "update",
+                            "sensor",
+                            "group",
+                            "sun",
+                            "input_boolean",
+                            "input_datetime",
+                            "input_select",
+                            "zone",
+                            "input_text",
+                            "scene",
+                            "device_tracker",
+                            "script",
+                            "light",
+                            "automation",
+                            "todo",
+                            "button",
+                            "remote",
+                            "stt",
+                            "tts",
+                            "wake_word",
+                            "lock",
+                            "media_player",
+                            "switch",
+                            "camera",
+                            "climate",
+                            "weather",
+                            "alert",
+                            "select",
+                            "number",
+                            "alarm_control_panel",
+                            "calendar",
+                            "image",
+                            "vacuum",
+                            "siren",
+                            "cover"
+                        ],
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "item": {
+                        "description": "Item to add to the shopping list.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "description": "Name of a device or entity.",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "state": {
+                        "description": "State of the device or entity to search for with HassGetState",
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "required": [
+            "intentType",
+            "slots"
+        ],
+        "type": "object"
+    }
+}
