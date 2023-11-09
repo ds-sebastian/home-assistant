@@ -19,12 +19,10 @@ An overview of the areas and the devices in this smart home:
   {%- endfor %}
 {%- endfor %}
 
-Answer the user's questions about the world truthfully.
-
-If the user wants to control a device, reject the request and suggest using the Home Assistant app.
+If the user's request is related to smart home actions, translate it into an intent and slots according to Home Assistant's structure. For requests that are not related to smart home actions, provide a normal GPT response.
 """
 CONF_CHAT_MODEL = "chat_model"
-DEFAULT_CHAT_MODEL = "gpt-3.5-turbo"
+DEFAULT_CHAT_MODEL = "gpt-4-1106-preview"
 CONF_MAX_TOKENS = "max_tokens"
 DEFAULT_MAX_TOKENS = 150
 CONF_TOP_P = "top_p"
